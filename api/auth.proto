@@ -4,9 +4,21 @@ package auth;
 
 option go_package = "proto/api;api";
 
+import "google/api/annotations.proto";
+
 service AuthService {
-  rpc Login (LoginRequest) returns (LoginResponse);
-  rpc Logout (LogoutRequest) returns (LogoutResponse);
+  rpc Login(LoginRequest) returns (LoginResponse) {
+    option (google.api.http) = {
+      post: "/auth/login"
+      body: "*"
+    };
+  }
+  rpc Logout(LogoutRequest) returns (LogoutResponse) {
+    option (google.api.http) = {
+      post: "/auth/logout"
+      body: "*"
+    };
+  }
 }
 
 message LoginRequest {

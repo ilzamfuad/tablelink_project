@@ -65,7 +65,7 @@ func (ur *userRepository) GetUserByEmail(email string) (*model.User, error) {
 
 func (ur *userRepository) GetUserByID(userID int) (*model.User, error) {
 	user := &model.User{}
-	err := ur.db.First(&user, userID).Error
+	err := ur.db.Preload("Role").Preload("Role.RoleRight").First(&user, userID).Error
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +75,7 @@ func (ur *userRepository) GetUserByID(userID int) (*model.User, error) {
 
 func (ur *userRepository) GetAllUsers() ([]model.User, error) {
 	user := []model.User{}
-	err := ur.db.Model(model.User{}).Take(&user).Error
+	err := ur.db.Preload("Role").Model(model.User{}).Take(&user).Error
 	if err != nil {
 		return nil, err
 	}

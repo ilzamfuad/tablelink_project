@@ -16,14 +16,12 @@ import (
 
 type UserController struct {
 	pb.UnimplementedUserServiceServer
-	userService         service.UserService
-	roleRightsValidator *utils.RoleRightsValidator
+	userService service.UserService
 }
 
-func NewUserController(userService service.UserService, roleValidator utils.RoleRightsValidator) *UserController {
+func NewUserController(userService service.UserService) *UserController {
 	return &UserController{
-		userService:         userService,
-		roleRightsValidator: &roleValidator,
+		userService: userService,
 	}
 }
 
@@ -138,6 +136,11 @@ func (uc *UserController) DeleteUserRequest(ctx context.Context, req *pb.DeleteU
 }
 
 func (uc *UserController) roleValidate(ctx context.Context) error {
+	userID, ok := ctx.Value(utils.UserCtxKey).(uint)
+	if !ok {
+		return status.Errorf(codes.Unauthenticated, "user not authenticated")
+	}
+
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return status.Errorf(codes.Unauthenticated, "missing metadata")
@@ -153,7 +156,7 @@ func (uc *UserController) roleValidate(ctx context.Context) error {
 
 	method := mapGrpcMethodToHttpMethod(route)
 
-	err := uc.roleRightsValidator.ValidateRoleRights(section, route, method)
+	err := uc.userService.ValidateRoleRights(userID, section, route, method)
 	if err != nil {
 		return status.Errorf(codes.PermissionDenied, "access denied: %v", err.Error())
 	}

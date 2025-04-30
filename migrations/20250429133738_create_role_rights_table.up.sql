@@ -12,4 +12,4 @@ CREATE TABLE role_rights (
     CONSTRAINT fk_role_rights_role FOREIGN KEY (role_id) REFERENCES roles (id) ON DELETE CASCADE
 );
 
-CREATE INDEX idx_role_rights_section_route ON role_rights (section, route);
+CREATE INDEX idx_role_rights_role_id ON role_rights (role_id);

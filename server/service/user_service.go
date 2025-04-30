@@ -1,7 +1,9 @@
 package service
 
 import (
+	"errors"
 	"html"
+	"net/http"
 	"strings"
 	"tablelink_project/server/model"
 	"tablelink_project/server/repository"
@@ -18,6 +20,7 @@ type UserService interface {
 	LoginCheck(username, password string) (string, error)
 	GetUserByID(userID int) (*model.User, error)
 	GetAllUsers() ([]model.User, error)
+	ValidateRoleRights(userID uint, section, route, method string) error
 }
 
 type userService struct {
@@ -88,4 +91,44 @@ func (us *userService) GetAllUsers() ([]model.User, error) {
 
 func verifyPassword(password, hashedPassword string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+}
+
+func (us *userService) ValidateRoleRights(userID uint, section, route, method string) error {
+	var roleRight model.RoleRight
+
+	user, err := us.GetUserByID(int(userID))
+	if err != nil {
+		return err
+	}
+
+	for _, role := range user.Role.RoleRight {
+		if role.Section == section && role.Route == route {
+			roleRight = role
+			break
+		}
+	}
+
+	// Validate the HTTP method based on the role_rights table
+	switch method {
+	case http.MethodPost:
+		if roleRight.RCreate != 1 {
+			return errors.New("access denied: POST method not allowed")
+		}
+	case http.MethodGet:
+		if roleRight.RRead != 1 {
+			return errors.New("access denied: GET method not allowed")
+		}
+	case http.MethodPut:
+		if roleRight.RUpdate != 1 {
+			return errors.New("access denied: PUT method not allowed")
+		}
+	case http.MethodDelete:
+		if roleRight.RDelete != 1 {
+			return errors.New("access denied: DELETE method not allowed")
+		}
+	default:
+		return errors.New("access denied: unsupported HTTP method")
+	}
+
+	return nil
 }

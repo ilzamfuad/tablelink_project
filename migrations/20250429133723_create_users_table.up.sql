@@ -10,4 +10,4 @@ CREATE TABLE users (
     CONSTRAINT fk_role FOREIGN KEY (role_id) REFERENCES roles (id) ON DELETE CASCADE
 );
 
-CREATE INDEX idx_users_email ON users (email);
+CREATE UNIQUE INDEX idx_users_email ON users (email);
