@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"tablelink_project/config"
 	pb "tablelink_project/proto/api"
 	"tablelink_project/server/model"
 	"tablelink_project/server/service"
@@ -154,27 +155,15 @@ func (uc *UserController) roleValidate(ctx context.Context) error {
 
 	route, _ := grpc.Method(ctx)
 
-	method := mapGrpcMethodToHttpMethod(route)
+	restMapping, exists := config.GrpcToRestfulMapping[route]
+	if !exists {
+		return status.Errorf(codes.InvalidArgument, "invalid route: %s", route)
+	}
 
-	err := uc.userService.ValidateRoleRights(userID, section, route, method)
+	err := uc.userService.ValidateRoleRights(userID, section, restMapping.Route, restMapping.Method)
 	if err != nil {
 		return status.Errorf(codes.PermissionDenied, "access denied: %v", err.Error())
 	}
 
 	return nil
-}
-
-func mapGrpcMethodToHttpMethod(grpcMethod string) string {
-	switch grpcMethod {
-	case "/UserService/GetAllUsers":
-		return "GET"
-	case "/UserService/CreateUser":
-		return "POST"
-	case "/UserService/UpdateUser":
-		return "PUT"
-	case "/UserService/DeleteUser":
-		return "DELETE"
-	default:
-		return "UNKNOWN"
-	}
 }

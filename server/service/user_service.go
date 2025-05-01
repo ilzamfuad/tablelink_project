@@ -108,7 +108,6 @@ func (us *userService) ValidateRoleRights(userID uint, section, route, method st
 		}
 	}
 
-	// Validate the HTTP method based on the role_rights table
 	switch method {
 	case http.MethodPost:
 		if roleRight.RCreate != 1 {
