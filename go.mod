@@ -9,6 +9,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.3
 	github.com/jinzhu/gorm v1.9.16
+	github.com/joho/godotenv v1.5.1
 	golang.org/x/crypto v0.37.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20250425173222-7b384671a197
 	google.golang.org/grpc v1.72.0
