@@ -28,12 +28,14 @@ func JwtAuthInterceptor() grpc.UnaryServerInterceptor {
 		}
 		token := tokens[0]
 
-		userID, err := utils.ValidateToken(token)
-		if err != nil {
-			return nil, status.Errorf(http.StatusUnauthorized, "invalid token: %v", err)
-		}
+		if info.FullMethod != "/auth/login" {
+			userID, err := utils.ValidateToken(token)
+			if err != nil {
+				return nil, status.Errorf(http.StatusUnauthorized, "invalid token: %v", err)
+			}
 
-		ctx = context.WithValue(ctx, utils.UserCtxKey, userID)
+			ctx = context.WithValue(ctx, utils.UserCtxKey, userID)
+		}
 
 		return handler(ctx, req)
 	}
