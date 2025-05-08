@@ -19,13 +19,7 @@ This is for Tablelink Test Code Project, The test include grpc connection with r
 
 To add or update APIs in the `.proto` files, use the following command:
 ```bash
-protoc -I=. \
-  -I=$(go list -f '{{ .Dir }}' -m github.com/grpc-ecosystem/grpc-gateway/v2) \
-  -I=dependencies/googleapis \
-  --go_out . \
-  --go-grpc_out . \
-  --grpc-gateway_out . \
-  api/<proto_file>
+protoc -I=. -I=dependencies/googleapis --go_out=. --go-grpc_out=. --grpc-gateway_out=. api/<proto_file>
 ```
 Replace `<proto_file>` with the name of your `.proto` file.
 
