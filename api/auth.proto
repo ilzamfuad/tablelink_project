@@ -19,6 +19,12 @@ service AuthService {
       body: "*"
     };
   }
+  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {
+        option (google.api.http) = {
+            post: "/auth/refresh"
+            body: "*"
+        };
+    }
 }
 
 message LoginRequest {
@@ -30,6 +36,7 @@ message LoginResponse {
   bool status = 1;
   string message = 2;
   string access_token = 3;
+  string refresh_token = 4;
 }
 
 message LogoutRequest {
@@ -39,4 +46,15 @@ message LogoutRequest {
 message LogoutResponse {
   bool status = 1;
   string message = 2;
+}
+
+message RefreshTokenRequest {
+    string refresh_token = 1;
+}
+
+message RefreshTokenResponse {
+  bool status = 1;
+  string message = 2;
+  string access_token = 3;
+  string refresh_token = 4;
 }

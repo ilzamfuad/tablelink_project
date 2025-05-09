@@ -3,13 +3,13 @@ package controller
 import (
 	"context"
 	"errors"
-	"os"
-	"strconv"
 	pb "tablelink_project/proto/api"
 	"tablelink_project/server/service"
-	"time"
+	"tablelink_project/server/utils"
 
 	"github.com/go-redis/redis/v8"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type AuthController struct {
@@ -42,14 +42,7 @@ func (ac *AuthController) Login(ctx context.Context, req *pb.LoginRequest) (*pb.
 		return response, errors.New("username or password is incorrect")
 	}
 
-	token_lifespan, err := strconv.Atoi(os.Getenv("TOKEN_HOUR_LIFESPAN"))
-	if err != nil {
-		response.Status = false
-		response.Message = "Failed to parse token lifespan: " + err.Error()
-		return response, errors.New("failed to save token in Redis")
-	}
-
-	err = ac.redisClient.Set(ctx, token, req.Email, time.Duration(token_lifespan)).Err()
+	err = ac.redisClient.Set(ctx, req.Email, token, utils.AccessTokenExpiredTime).Err()
 	if err != nil {
 		response.Status = false
 		response.Message = "Failed to save token in Redis: " + err.Error()
@@ -57,8 +50,35 @@ func (ac *AuthController) Login(ctx context.Context, req *pb.LoginRequest) (*pb.
 	}
 
 	return &pb.LoginResponse{
-		Status:      true,
-		Message:     "Login successful",
-		AccessToken: token,
+		Status:       true,
+		Message:      "Login successful",
+		AccessToken:  token.AccessToken,
+		RefreshToken: token.RefreshToken,
 	}, nil
+}
+
+func (ac *AuthController) RefreshToken(ctx context.Context, req *pb.RefreshTokenRequest) (*pb.RefreshTokenResponse, error) {
+	response := &pb.RefreshTokenResponse{}
+
+	// Validate the refresh token
+	token, err := utils.ValidateRefreshToken(req.RefreshToken)
+	if err != nil {
+		response.Status = false
+		response.Message = "Invalid refresh token"
+		return response, status.Errorf(codes.Unauthenticated, "invalid refresh token: %v", err)
+	}
+
+	// Generate a new access token
+	accessToken, err := utils.GenerateToken(token.UserID)
+	if err != nil {
+		response.Status = false
+		response.Message = "Failed to generate access token"
+		return response, status.Errorf(codes.Internal, "failed to generate access token: %v", err)
+	}
+
+	response.Status = true
+	response.Message = "Token refreshed successfully"
+	response.AccessToken = accessToken.AccessToken
+	response.RefreshToken = accessToken.RefreshToken
+	return response, nil
 }

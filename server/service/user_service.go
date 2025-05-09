@@ -17,7 +17,7 @@ type UserService interface {
 	CreateUser(model.User) error
 	UpdateUser(*model.User) error
 	DeleteUser(userID int) error
-	LoginCheck(username, password string) (string, error)
+	LoginCheck(username, password string) (*model.Token, error)
 	GetUserByID(userID int) (*model.User, error)
 	GetAllUsers() ([]model.User, error)
 	ValidateRoleRights(userID uint, section, route, method string) error
@@ -52,33 +52,33 @@ func (us *userService) DeleteUser(userID int) error {
 	return us.userRepo.DeleteUser(userID)
 }
 
-func (us *userService) LoginCheck(email, password string) (string, error) {
+func (us *userService) LoginCheck(email, password string) (*model.Token, error) {
 	var err error
 
 	user, err := us.userRepo.GetUserByEmail(email)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	err = verifyPassword(password, user.Password)
 
 	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
-		return "", err
+		return nil, err
 	}
 
 	token, err := utils.GenerateToken(user.ID)
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	user.LastAccess = time.Now()
 	err = us.userRepo.UpdateUser(user)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return token, nil
+	return &token, nil
 }
 
 func (us *userService) GetUserByID(userID int) (*model.User, error) {
